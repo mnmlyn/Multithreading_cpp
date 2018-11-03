@@ -1,13 +1,9 @@
 #include <iostream>
-#include <thread>
-
-void hello(){
-    std::cout << "Hello Concurrent World\n";
-}
+#include "main.h"
 
 int main(){
-    std::thread t(hello);
-    t.join();
+    /* 第一个多线程程序 */
+    firstTest();
 
     std::cin.get();
     return 0;

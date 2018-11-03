@@ -1,2 +1,3 @@
-prog:main.cpp
-	g++ -g -o prog main.cpp
+srcfile=main.cpp 001.firstMultithreadProgram.cpp
+prog:$(srcfile)
+	g++ -g -o prog $(srcfile)
