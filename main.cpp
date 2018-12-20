@@ -6,9 +6,8 @@ int main(){
     //firstTest();
     /* RAII，保证函数异常和正常退出前，都调用了join */
     //RAII_Test();
-    
+    /* 两个线程交替执行，考察条件变量的使用 */
     problem1();
 
-    std::cin.get();
     return 0;
 }
