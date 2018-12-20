@@ -10,9 +10,9 @@
 #include <mutex>
 #include <condition_variable>
 
-std::mutex mtx;
-std::condition_variable cv;
-bool ready = true;
+static std::mutex mtx;
+static std::condition_variable cv;
+static bool ready = true;
 
 static void func_child(){
     int i,j;
