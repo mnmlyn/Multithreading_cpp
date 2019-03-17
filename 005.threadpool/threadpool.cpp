@@ -18,6 +18,8 @@ struct Task {
     void *arg;
     int argn;
 };
+typedef struct Task Task;
+typedef Task * TaskPtr;
 
 /**
  * @struct          ThreadPool
@@ -47,13 +49,14 @@ struct ThreadPool {
     volatile int started;
     int runningCount;
 };
+typedef struct ThreadPool ThreadPool;
 
 /**
  * @function    threadPool_workerThread
  * @brief       线程池工作线程
  * @pool        线程池指针
  */
-void *threadPool_workerThread(void *_pool) {
+static void *threadPool_workerThread(void *_pool) {
     ThreadPoolPtr pool = (ThreadPoolPtr)_pool;
     Task task;
     for (;;) {
@@ -61,8 +64,7 @@ void *threadPool_workerThread(void *_pool) {
         --pool->runningCount;
         while (pool->queueCount == 0 && pool->started)
             pthread_cond_wait(&pool->cond, &pool->mutex);//TODO: on fail
-        bool wait_task_finish = true;
-        if (wait_task_finish ? 0 == pool->queueCount : 0 == pool->started)
+        if (0 == pool->queueCount && 0 == pool->started)
             break;
         task = pool->taskQueue[pool->head];
         pool->head = (pool->head + 1) % pool->queueSize;
@@ -121,7 +123,12 @@ ThreadPoolPtr threadPool_create(int poolSize, int queueSize) {
 
 /**
  * @function    threadPool_addTask
- *
+ * @brief       向线程池中添加任务
+ * @pool        线程池指针
+ * @func        任务函数
+ * @arg         参数指针
+ * @argn        参数的字节数
+ * @return      成功true，否则false
  */
 bool threadPool_addTask(ThreadPoolPtr pool, 
         TaskFunc func, void *arg, int argn) {
@@ -133,6 +140,7 @@ bool threadPool_addTask(ThreadPoolPtr pool,
     pthread_mutex_lock(&pool->mutex);//TODO: on fail
     if (pool->queueCount >= pool->queueSize || 0 == pool->started) {
         pthread_mutex_unlock(&pool->mutex);//TODO: on fail
+        free(_arg);
         return false;
     }
     pool->taskQueue[pool->tail].process = func;
@@ -147,7 +155,9 @@ bool threadPool_addTask(ThreadPoolPtr pool,
 
 /**
  * @function    threadPool_destroy
- *
+ * @brief       销毁线程池，等待任务执行完毕
+ * @pool        线程池指针
+ * @return      成功true，否则false
  */
 bool threadPool_destroy(ThreadPoolPtr pool) {
     int i;
@@ -158,22 +168,8 @@ bool threadPool_destroy(ThreadPoolPtr pool) {
     for (i = 0; i < pool->poolSize; ++i) {
         pthread_join(pool->threads[i], NULL);//TODO: on fail
     }
-    return false;
+    free(pool->threads);
+    free(pool->taskQueue);
+    free(pool);
+    return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
